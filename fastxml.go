@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"unsafe"
 	"bytes"
-	"strings"
-	"strconv"
 	"encoding/xml"
+	"fmt"
+	"strconv"
+	"strings"
+	"unsafe"
 )
 
 // unsafeString performs a no-copy cast of a byte slice to a string
@@ -45,7 +45,7 @@ func decodedValue(b []byte) []byte {
 		if b[entityStart] == '#' {
 			if b[entityStart+1] == 'x' {
 				// Try to parse as hex, if valid use the rune value
-				num := unsafeString(b[entityStart+2:entityEnd])
+				num := unsafeString(b[entityStart+2 : entityEnd])
 				if n, err := strconv.ParseInt(num, 16, 64); err == nil {
 					// TODO: err check?
 					buf.WriteRune(rune(n))
@@ -54,7 +54,7 @@ func decodedValue(b []byte) []byte {
 				}
 			} else {
 				// Try to parse the number, if valid use the rune value
-				num := unsafeString(b[entityStart+1:entityEnd])
+				num := unsafeString(b[entityStart+1 : entityEnd])
 				if n, err := strconv.Atoi(num); err == nil {
 					// TODO: err check?
 					buf.WriteRune(rune(n))
@@ -68,13 +68,13 @@ func decodedValue(b []byte) []byte {
 			name := unsafeString(b[entityStart:entityEnd])
 			var replacement string
 			switch name {
-			case "lt": 
+			case "lt":
 				replacement = "<"
-			case "gt": 
+			case "gt":
 				replacement = ">"
-			case "amp": 
+			case "amp":
 				replacement = "&"
-			case "apos": 
+			case "apos":
 				replacement = "'"
 			case "quot":
 				replacement = `"`
@@ -88,7 +88,7 @@ func decodedValue(b []byte) []byte {
 				buf.Write(b[beginEntity:newIdx])
 			}
 		}
-		// Now, find the next entity 
+		// Now, find the next entity
 		beginEntity, entityStart = indexRune(b, newIdx, '&')
 		// If no match, we're at the end, add the rest and break
 		if beginEntity == -1 {
@@ -103,12 +103,12 @@ func decodedValue(b []byte) []byte {
 // TODO: benchmark against bytes functions that do similar
 func hasPrefix(b []byte, offset int, prefix string) bool {
 	// Make sure we have enough space to check
-	if len(b) - offset < len(prefix) {
+	if len(b)-offset < len(prefix) {
 		return false
 	}
 	// Loop each rune in prefix and check against b
 	for idx, char := range prefix {
-		if b[idx + offset] != byte(char) {
+		if b[idx+offset] != byte(char) {
 			return false
 		}
 	}
@@ -173,7 +173,7 @@ type TokenReader struct {
 	// b is the raw byte slice we are parsing
 	b []byte
 	// idx is the offset in b we start the next token at
-	idx int 
+	idx int
 	// nextToken is used when there is a self-terminated element
 	nextToken *xml.EndElement
 }
@@ -187,14 +187,14 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 		return token, nil
 	}
 	// If we've reached the end, bail
-	if tr.idx + 1 >= len(tr.b) {
+	if tr.idx+1 >= len(tr.b) {
 		return nil, nil
 	}
 	// Start at the current offset
 	b := tr.b[tr.idx:]
 	// Find the start of the XML element
 	charEnd, elemStart := indexRune(b, 0, '<')
-	// If no element found, must be EOF, set charEnd to remaining length 
+	// If no element found, must be EOF, set charEnd to remaining length
 	if charEnd == -1 {
 		charEnd = len(b) - 1
 	}
@@ -205,10 +205,10 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 		tr.idx += charEnd
 		return xml.CharData(decodedValue(b[0:charEnd])), nil
 	}
-	// The smallest possible element is <a>, anything smaller quit 
+	// The smallest possible element is <a>, anything smaller quit
 	if rem := len(b) - elemStart; rem < 3 {
 		return nil, fmt.Errorf(
-			"Not enough bytes (%d) remaining for valid XML declaration", 
+			"Not enough bytes (%d) remaining for valid XML declaration",
 			rem,
 		)
 	}
@@ -219,10 +219,10 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 	case '?':
 		// Find the target of the ProcInst
 		// TODO: Can other whitespace be valid here?
-		targetEnd, instStart := indexRune(b, elemStart + 1, ' ')
+		targetEnd, instStart := indexRune(b, elemStart+1, ' ')
 		if targetEnd == -1 {
 			return nil, fmt.Errorf(
-				"Couldn't find target of XML ProcInst in: %s", 
+				"Couldn't find target of XML ProcInst in: %s",
 				unsafeString(b[elemStart+1:]),
 			)
 		}
@@ -231,23 +231,23 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 		elemEnd, newIdx := indexString(b, elemStart+2, "?>")
 		if elemEnd == -1 {
 			return nil, fmt.Errorf(
-				"Couldn't find end of XML ProcInst in: %s", 
+				"Couldn't find end of XML ProcInst in: %s",
 				unsafeString(b[elemStart+1:]),
 			)
 		}
 		// Build the ProcInst and return it
 		tr.idx += newIdx
 		return xml.ProcInst{
-			Target: unsafeString(b[elemStart + 1:targetEnd]),
-			Inst: b[instStart:elemEnd],
+			Target: unsafeString(b[elemStart+1 : targetEnd]),
+			Inst:   b[instStart:elemEnd],
 		}, nil
 	// Directive
 	case '!':
 		// Find the end of the Directive
-		elemEnd, newIdx := indexRune(b, elemStart + 1, '>')
+		elemEnd, newIdx := indexRune(b, elemStart+1, '>')
 		if elemEnd == -1 {
 			return nil, fmt.Errorf(
-				"Couldn't find end of XML Directive in: %s", 
+				"Couldn't find end of XML Directive in: %s",
 				unsafeString(b[elemStart+1:]),
 			)
 		}
@@ -259,13 +259,13 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			// Make sure it ended with --> otherwise bail
 			if elemEnd == -1 {
 				return nil, fmt.Errorf(
-					"Couldn't find end of XML Comment: %s", 
+					"Couldn't find end of XML Comment: %s",
 					unsafeString(b[elemStart+1:]),
 				)
 			}
 			// Build the comment and return it
 			tr.idx += newIdx
-			return xml.Comment(b[elemStart+3:elemEnd]), nil
+			return xml.Comment(b[elemStart+3 : elemEnd]), nil
 		}
 		// CDATA is a special case of directive (becomes CharData)
 		if hasPrefix(b, elemStart+1, "[CDATA[") {
@@ -274,31 +274,31 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			// Make sure it ended with CDATA otherwise bail
 			if elemEnd == -1 {
 				return nil, fmt.Errorf(
-					"Couldn't find end of XML CDATA: %s", 
+					"Couldn't find end of XML CDATA: %s",
 					unsafeString(b[elemStart+1:]),
 				)
 			}
 			// Build the comment and return it
 			tr.idx += newIdx
-			return xml.CharData(b[elemStart+8:elemEnd]), nil
+			return xml.CharData(b[elemStart+8 : elemEnd]), nil
 		}
 		// Build the Directive and return it
 		tr.idx += newIdx
-		return xml.Directive(b[elemStart+1:elemEnd]), nil
+		return xml.Directive(b[elemStart+1 : elemEnd]), nil
 	}
 	// Check if it's the end of an element and stop here
 	if b[elemStart] == '/' {
-		elemEnd, newIdx := indexRune(b, elemStart + 1, '>')
+		elemEnd, newIdx := indexRune(b, elemStart+1, '>')
 		if elemEnd == -1 {
 			return nil, fmt.Errorf(
-				"Couldn't find end of terminating XML Element in: %s", 
+				"Couldn't find end of terminating XML Element in: %s",
 				unsafeString(b[elemStart+1:]),
 			)
 		}
 		// Build the EndElement and return it
 		tr.idx += newIdx
 		return xml.EndElement{
-			Name: splitName(b[elemStart + 1:elemEnd], true),
+			Name: splitName(b[elemStart+1:elemEnd], true),
 		}, nil
 	}
 	// Must be an element if we've reached this point
@@ -307,7 +307,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 	elemEnd, newIdx := indexRune(b, elemStart, '>')
 	if elemEnd == -1 {
 		return nil, fmt.Errorf(
-			"Couldn't find end of XML Element in: %s", 
+			"Couldn't find end of XML Element in: %s",
 			unsafeString(b[elemStart+1:]),
 		)
 	}
@@ -333,7 +333,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			_, quoteStart := indexRune(b[:elemEnd], equalEnd, '"')
 			if quoteStart == -1 {
 				return nil, fmt.Errorf(
-					"Couldn't find start of XML attribute in: %s", 
+					"Couldn't find start of XML attribute in: %s",
 					unsafeString(b[equalEnd:]),
 				)
 			}
@@ -341,13 +341,13 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			quoteEnd, newIdx := indexRune(b[:elemEnd], quoteStart, '"')
 			if quoteEnd == -1 {
 				return nil, fmt.Errorf(
-					"Couldn't find end of XML attribute in: %s", 
+					"Couldn't find end of XML attribute in: %s",
 					unsafeString(b[quoteStart:]),
 				)
 			}
 			// Add the parsed attribute
 			attrs = append(attrs, xml.Attr{
-				Name: splitName(b[startAttr:equalStart], true),
+				Name:  splitName(b[startAttr:equalStart], true),
 				Value: unsafeString(decodedValue(b[quoteStart:quoteEnd])),
 			})
 			// Set the offset for the next attr loop
@@ -359,7 +359,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 	if b[elemEnd-1] == '/' {
 		selfTerminated = true
 		if elemNameEnd == -1 {
-			elemNameEnd = elemEnd-1
+			elemNameEnd = elemEnd - 1
 		}
 	} else if elemNameEnd == -1 {
 		elemNameEnd = elemEnd
