@@ -1,12 +1,22 @@
-package fastxml
+package main
 
 import (
 	"fmt"
+	"unsafe"
 	"bytes"
 	"strings"
 	"strconv"
 	"encoding/xml"
 )
+
+// unsafeString performs a no-copy cast of a byte slice to a string
+// https://github.com/golang/go/issues/25484 has some details on this
+// this is fast but also has the potential to create mutable strings
+// if we assume the b is immutable this is "ok"
+// this is the same method used by strings.Builder
+func unsafeString(bs []byte) string {
+	return *(*string)(unsafe.Pointer(&bs))
+}
 
 // decodedValue replaces entities with their real value as fast as possible
 // TODO: some cases do a string([]byte(string(val))) when calling this method
@@ -35,7 +45,7 @@ func decodedValue(b []byte) []byte {
 		if b[entityStart] == '#' {
 			if b[entityStart+1] == 'x' {
 				// Try to parse as hex, if valid use the rune value
-				num := string(b[entityStart+2:entityEnd])
+				num := unsafeString(b[entityStart+2:entityEnd])
 				if n, err := strconv.ParseInt(num, 16, 64); err == nil {
 					// TODO: err check?
 					buf.WriteRune(rune(n))
@@ -44,7 +54,7 @@ func decodedValue(b []byte) []byte {
 				}
 			} else {
 				// Try to parse the number, if valid use the rune value
-				num := string(b[entityStart+1:entityEnd])
+				num := unsafeString(b[entityStart+1:entityEnd])
 				if n, err := strconv.Atoi(num); err == nil {
 					// TODO: err check?
 					buf.WriteRune(rune(n))
@@ -55,7 +65,7 @@ func decodedValue(b []byte) []byte {
 		} else {
 			// Try to look it up instead by name
 			// TODO: custom Entity handling?
-			name := string(b[entityStart:entityEnd])
+			name := unsafeString(b[entityStart:entityEnd])
 			var replacement string
 			switch name {
 			case "lt": 
@@ -111,23 +121,23 @@ func splitName(b []byte, trim bool) xml.Name {
 		if trim {
 			// TODO: This searches left and right unnecessarily
 			return xml.Name{
-				Space: strings.TrimSpace(string(b[0:idx])),
-				Local: strings.TrimSpace(string(b[idx+1:])),
+				Space: strings.TrimSpace(unsafeString(b[0:idx])),
+				Local: strings.TrimSpace(unsafeString(b[idx+1:])),
 			}
 		} else {
 			return xml.Name{
-				Space: string(b[0:idx]),
-				Local: string(b[idx+1:]),
+				Space: unsafeString(b[0:idx]),
+				Local: unsafeString(b[idx+1:]),
 			}
 		}
 	}
 	if trim {
 		return xml.Name{
-			Local: string(b),
+			Local: unsafeString(b),
 		}
 	} else {
 		return xml.Name{
-			Local: strings.TrimSpace(string(b)),
+			Local: strings.TrimSpace(unsafeString(b)),
 		}
 	}
 }
@@ -213,7 +223,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 		if targetEnd == -1 {
 			return nil, fmt.Errorf(
 				"Couldn't find target of XML ProcInst in: %s", 
-				string(b[elemStart+1]),
+				unsafeString(b[elemStart+1:]),
 			)
 		}
 		// Find the end of the comment
@@ -222,13 +232,13 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 		if elemEnd == -1 {
 			return nil, fmt.Errorf(
 				"Couldn't find end of XML ProcInst in: %s", 
-				string(b[elemStart+1]),
+				unsafeString(b[elemStart+1:]),
 			)
 		}
 		// Build the ProcInst and return it
 		tr.idx += newIdx
 		return xml.ProcInst{
-			Target: string(b[elemStart + 1:targetEnd]),
+			Target: unsafeString(b[elemStart + 1:targetEnd]),
 			Inst: b[instStart:elemEnd],
 		}, nil
 	// Directive
@@ -238,7 +248,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 		if elemEnd == -1 {
 			return nil, fmt.Errorf(
 				"Couldn't find end of XML Directive in: %s", 
-				string(b[elemStart+1]),
+				unsafeString(b[elemStart+1:]),
 			)
 		}
 		// Comments are a special case of directive
@@ -250,7 +260,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			if elemEnd == -1 {
 				return nil, fmt.Errorf(
 					"Couldn't find end of XML Comment: %s", 
-					string(b[elemStart+1]),
+					unsafeString(b[elemStart+1:]),
 				)
 			}
 			// Build the comment and return it
@@ -265,7 +275,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			if elemEnd == -1 {
 				return nil, fmt.Errorf(
 					"Couldn't find end of XML CDATA: %s", 
-					string(b[elemStart+1]),
+					unsafeString(b[elemStart+1:]),
 				)
 			}
 			// Build the comment and return it
@@ -282,7 +292,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 		if elemEnd == -1 {
 			return nil, fmt.Errorf(
 				"Couldn't find end of terminating XML Element in: %s", 
-				string(b[elemStart+1]),
+				unsafeString(b[elemStart+1:]),
 			)
 		}
 		// Build the EndElement and return it
@@ -298,7 +308,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 	if elemEnd == -1 {
 		return nil, fmt.Errorf(
 			"Couldn't find end of XML Element in: %s", 
-			string(b[elemStart+1]),
+			unsafeString(b[elemStart+1:]),
 		)
 	}
 	// Check if it has attributes (indicated by a space following the name)
@@ -324,7 +334,7 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			if quoteStart == -1 {
 				return nil, fmt.Errorf(
 					"Couldn't find start of XML attribute in: %s", 
-					string(b[equalEnd:]),
+					unsafeString(b[equalEnd:]),
 				)
 			}
 			// Find the end of the quoted value
@@ -332,13 +342,13 @@ func (tr *TokenReader) Token() (xml.Token, error) {
 			if quoteEnd == -1 {
 				return nil, fmt.Errorf(
 					"Couldn't find end of XML attribute in: %s", 
-					string(b[quoteStart:]),
+					unsafeString(b[quoteStart:]),
 				)
 			}
 			// Add the parsed attribute
 			attrs = append(attrs, xml.Attr{
 				Name: splitName(b[startAttr:equalStart], true),
-				Value: string(decodedValue(b[quoteStart:quoteEnd])),
+				Value: unsafeString(decodedValue(b[quoteStart:quoteEnd])),
 			})
 			// Set the offset for the next attr loop
 			startAttr = newIdx
