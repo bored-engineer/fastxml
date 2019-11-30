@@ -249,7 +249,8 @@ func (tr *TokenReader) parseName(start, end int) xml.Name {
 
 // parseAttrs parses the attributes within an element
 func (tr *TokenReader) parseAttrs(stopIdx int) ([]xml.Attr, error) {
-	var attrs []xml.Attr
+	// If this has been called we can assume at least 1 attr exists
+	attrs := make([]xml.Attr, 0, 1)
 	for {
 		// Find the location of the =
 		equalIdx := tr.indexRuneWithin('=', stopIdx)
