@@ -322,7 +322,7 @@ func (tr *TokenReader) parseElement() (xml.Token, error) {
 	name := tr.parseName(tr.cursor, nameIdx)
 	// If it's an end element, bail here early
 	if endElement {
-		return &xml.EndElement{
+		return xml.EndElement{
 			Name: name,
 		}, nil
 	}
@@ -336,7 +336,7 @@ func (tr *TokenReader) parseElement() (xml.Token, error) {
 	if nameIdx == endIdx || (selfClosingElement && nameIdx == endIdx-1) {
 		// Adjust cursor and return
 		tr.cursor = endIdx + 1
-		return &xml.StartElement{
+		return xml.StartElement{
 			Name: name,
 			Attr: nil,
 		}, nil
@@ -349,7 +349,7 @@ func (tr *TokenReader) parseElement() (xml.Token, error) {
 	}
 	// Adjust cursor and return
 	tr.cursor = endIdx + 1
-	return &xml.StartElement{
+	return xml.StartElement{
 		Name: name,
 		Attr: attrs,
 	}, nil
