@@ -11,8 +11,8 @@ $ go test -benchmem -bench .
 goos: darwin
 goarch: amd64
 pkg: github.com/bored-engineer/fastxml
-BenchmarkFastXMLTokenReader-12    	      38	  30792780 ns/op	18077159 B/op	  343059 allocs/op
-BenchmarkStdlibTokenReader-12     	       7	 156546866 ns/op	27672694 B/op	  719542 allocs/op
+BenchmarkFastXMLTokenReader-12    	      33	  33571499 ns/op	18076583 B/op	  343060 allocs/op
+BenchmarkStdlibTokenReader-12     	       7	 160392950 ns/op	27672704 B/op	  719542 allocs/op
 ```
 Also note, fastxml has an unfair advantage in these benchmarks over stdlib as it only operates on a complete `[]byte` slice instead of a streaming `io.Reader`.
 
