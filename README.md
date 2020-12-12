@@ -5,16 +5,18 @@ A "fast" implementation of Golang's [xml.TokenReader](https://godoc.org/encoding
 Some of fastxml's performance gains come from assuming that the input XML is well-formed. Generally speaking it should return a relevant error when handling invalid XML, but it should never be used in a security sensitive context (ex: parsing SAML data). 
 
 ## Benchmark
-Testing against a completely arbitrary XML file I had locally:
+Testing against the [SwissProt](http://aiweb.cs.washington.edu/research/projects/xmltk/xmldata/www/repository.html) (109 MB) XML file shows a 3x performance improvement over stdlib:
 ```
-$ go test -benchmem -bench .
+$ go test -bench=. -benchmem
 goos: darwin
 goarch: amd64
 pkg: github.com/bored-engineer/fastxml
-BenchmarkFastXMLTokenReader-12    	      37	  30386438 ns/op	18076570 B/op	  343060 allocs/op
-BenchmarkStdlibTokenReader-12     	       7	 154575040 ns/op	27672699 B/op	  719542 allocs/op
+BenchmarkStdlibReader-12     	       1	4715479832 ns/op	984328568 B/op	23578836 allocs/op
+BenchmarkFastXMLReader-12    	       1	1526542832 ns/op	1211033528 B/op	13541058 allocs/op
+PASS
+ok  	github.com/bored-engineer/fastxml	6.328s
 ```
-Also note, fastxml has an unfair advantage in these benchmarks over stdlib as it only operates on a complete `[]byte` slice instead of a streaming `io.Reader`.
+Also note, fastxml has an unfair advantage in these benchmarks over stdlib as it only operates on a complete `[]byte` slice instead of a streaming `io.Reader` and decoded xml entities on-demand.
 
 ## Usage
 ```go
@@ -25,9 +27,9 @@ import (
 )
 
 func main() {
-  tr := fastxml.NewTokenReader([]byte(`<xml></xml>`))
+  tr := fastxml.NewDecoder([]byte(`<xml></xml>`))
   for {
-    token, err := tr.Token()
+    token, err := tr.RawToken()
     if err != nil {
       log.Fatal(err)
     } else if token == nil {
@@ -38,6 +40,3 @@ func main() {
   }
 }
 ```
-
-## Tests
-TODO (:fine)
