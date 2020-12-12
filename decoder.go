@@ -97,6 +97,8 @@ func parseElement(buf []byte) (Token, int, bool, error) {
 	// Element with attributes
 	se := StartElement{
 		Name: parseName(buf[:space]),
+		// pre-allocate a slice so it doesn't have to grow
+		Attr: make([]Attr, 0, 3),
 	}
 	// Loop each attribute
 	cursor := space + 1
