@@ -5,17 +5,17 @@ A "fast" implementation of Golang's [xml.TokenReader](https://godoc.org/encoding
 Some of fastxml's performance gains come from assuming that the input XML is well-formed. It should never be used in a security sensitive context (ex: parsing SAML data) as it can almost certainly be tricked into parsing data incorrectly or even panicing. 
 
 ## Benchmark
-Testing against the [SwissProt](http://aiweb.cs.washington.edu/research/projects/xmltk/xmldata/www/repository.html) (109 MB) XML file shows a 3x performance improvement over stdlib and a 11x improvement when using just Scanner (somewhat unfair):
+Testing against the [SwissProt](http://aiweb.cs.washington.edu/research/projects/xmltk/xmldata/www/repository.html) (109 MB) XML file shows a 2x performance improvement over stdlib and a 26x improvement when using just Scanner (somewhat unfair):
 ```
 $ go test -bench=. -benchmem
 goos: darwin
 goarch: amd64
 pkg: github.com/bored-engineer/fastxml
-BenchmarkScanner-12               	       8	 140186548 ns/op	       0 B/op	       0 allocs/op
-BenchmarkEncodingXMLDecoder-12    	       1	3465898521 ns/op	715213248 B/op	23563881 allocs/op
-BenchmarkXMLTokenReader-12        	       1	1543853191 ns/op	702095696 B/op	15335500 allocs/op
+BenchmarkScanner-12               	       8	 126334701 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEncodingXMLDecoder-12    	       1	3336588490 ns/op	715211208 B/op	23563878 allocs/op
+BenchmarkXMLTokenReader-12        	       1	1526152566 ns/op	702095696 B/op	15335500 allocs/op
 PASS
-ok  	github.com/bored-engineer/fastxml	8.044s
+ok  	github.com/bored-engineer/fastxml	8.168s
 ```
 Also note, fastxml has an unfair advantage in these benchmarks over stdlib as it only operates on a complete `[]byte` slice instead of a streaming `io.Reader`.
 
