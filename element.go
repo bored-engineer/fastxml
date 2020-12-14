@@ -20,6 +20,9 @@ func IsElement(token []byte) bool {
 
 // IsSelfClosing checks if a []byte is an self closing element (<element/>)
 func IsSelfClosing(token []byte) bool {
+	if len(token) <= 2 {
+		return false
+	}
 	return token[len(token)-2] == '/'
 }
 
