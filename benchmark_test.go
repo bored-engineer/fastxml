@@ -1,66 +1,42 @@
 package fastxml
 
 import (
-	"bytes"
 	"compress/gzip"
-	"encoding/xml"
-	"io"
 	"io/ioutil"
 	"os"
+	"sync"
 	"testing"
 )
 
-// Give stdlib a fighting chance reading directly from memory not disk
-func loadBenchmarkData() ([]byte, error) {
-	f, err := os.Open("./benchmark_SwissProt.xml.gz")
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	gr, err := gzip.NewReader(f)
-	if err != nil {
-		return nil, err
-	}
-	defer gr.Close()
-	b, err := ioutil.ReadAll(gr)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
+var benchCache struct {
+	sync.Once
+	b   []byte
+	err error
 }
 
-func BenchmarkStdlibReader(b *testing.B) {
-	data, err := loadBenchmarkData()
-	if err != nil {
-		b.Fatalf("failed to load data: %v", err)
-	}
-	for n := 0; n < b.N; n++ {
-		d := xml.NewDecoder(bytes.NewReader(data))
-		for {
-			_, err := d.RawToken()
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				b.Fatalf("unexpected error: %v", err)
-			}
+func benchData(b *testing.B) []byte {
+	benchCache.Do(func() {
+		f, err := os.Open("./benchmark_SwissProt.xml.gz")
+		if err != nil {
+			benchCache.err = err
+			return
 		}
-	}
-}
-
-func BenchmarkFastXMLReader(b *testing.B) {
-	data, err := loadBenchmarkData()
-	if err != nil {
-		b.Fatalf("failed to load data: %v", err)
-	}
-	for n := 0; n < b.N; n++ {
-		d := NewDecoder(data)
-		for {
-			_, err := d.RawToken()
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				b.Fatalf("unexpected error: %v", err)
-			}
+		defer f.Close()
+		gr, err := gzip.NewReader(f)
+		if err != nil {
+			benchCache.err = err
+			return
 		}
+		defer gr.Close()
+		b, err := ioutil.ReadAll(gr)
+		if err != nil {
+			benchCache.err = err
+			return
+		}
+		benchCache.b = b
+	})
+	if benchCache.err != nil {
+		b.Fatalf("failed to load benchmark data: %v", benchCache.err)
 	}
+	return benchCache.b
 }

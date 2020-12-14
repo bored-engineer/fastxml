@@ -34,7 +34,7 @@ func DecodeEntities(in []byte) ([]byte, error) {
 				base = 16
 				offset++
 			}
-			str := unsafeString(in[offset : start+end])
+			str := String(in[offset : start+end])
 			// rune is a int32
 			num, err := strconv.ParseInt(str, base, 32)
 			if err != nil {
@@ -44,7 +44,7 @@ func DecodeEntities(in []byte) ([]byte, error) {
 			size += utf8.EncodeRune(buf[size:], rune(num))
 		} else {
 			// Lookup an entity by name
-			entity := unsafeString(in[start : start+end])
+			entity := String(in[start : start+end])
 			// common entities are in the switch before hashmap
 			switch entity {
 			case "lt":

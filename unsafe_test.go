@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_unsafeString(t *testing.T) {
+func Test_String(t *testing.T) {
 	source := []byte("lorem ipsum dolor sit amet")
-	assert.Equal(t, "ipsum dolor", unsafeString(source[6:17]))
+	assert.Equal(t, "ipsum dolor", String(source[6:17]))
 }
