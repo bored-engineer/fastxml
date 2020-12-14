@@ -15,7 +15,7 @@ var (
 // IsElement checks if a []byte is an element (is not a ProcInst or Directive)
 func IsElement(token []byte) bool {
 	// Not Directive or ProcInst
-	return token[1] != '!' && token[1] != '?'
+	return len(token) >= 3 && token[0] == '<' && token[1] != '!' && token[1] != '?'
 }
 
 // IsSelfClosing checks if a []byte is an self closing element (<element/>)
