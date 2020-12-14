@@ -28,12 +28,12 @@ func IsSelfClosing(token []byte) bool {
 
 // IsEndElement checks if a []byte is a </element>
 func IsEndElement(token []byte) bool {
-	return token[1] == '/'
+	return len(token) >= 2 && token[0] == '<' && token[1] == '/'
 }
 
 // IsStartElement is the inverse of IsEndElement
 func IsStartElement(token []byte) bool {
-	return token[1] != '/'
+	return len(token) >= 2 && token[0] == '<' && token[1] != '/'
 }
 
 // Element extracts the name of the element (ex: `<foo:bar key="val"/>` -> `foo:bar`) and attribute sections
