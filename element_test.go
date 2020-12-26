@@ -51,6 +51,16 @@ func TestElement(t *testing.T) {
 			Name:  "foo",
 			Attrs: `key="val"`,
 		},
+		{
+			Token: `<foo key="val"/>`,
+			Name:  "foo",
+			Attrs: `key="val"`,
+		},
+		{
+			Token: `<foo key="val" />`,
+			Name:  "foo",
+			Attrs: `key="val" `,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Token, func(t *testing.T) {

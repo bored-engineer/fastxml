@@ -47,13 +47,13 @@ func Element(token []byte) (name []byte, attrs []byte) {
 	if token[start] == '/' {
 		start++ // handle end elements
 	}
-	// If there are attributes present
-	if space := bytes.IndexByte(token[start:end], ' '); space != -1 {
-		return token[start : start+space], token[space+start+1 : end]
-	}
 	// handle self-closing elements
 	if token[end-1] == '/' {
 		end--
+	}
+	// If there are attributes present
+	if space := bytes.IndexByte(token[start:end], ' '); space != -1 {
+		return token[start : start+space], token[space+start+1 : end]
 	}
 	// No attributes
 	return token[start:end], nil
