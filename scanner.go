@@ -29,6 +29,28 @@ func (s *Scanner) Offset() int {
 	return s.pos
 }
 
+// Seek implements the io.Seeker interface
+func (s *Scanner) Seek(offset int64, whence int) (int64, error) {
+	var abs int
+	switch whence {
+	case io.SeekStart:
+		abs = int(offset)
+	case io.SeekCurrent:
+		abs = s.pos + int(offset)
+	case io.SeekEnd:
+		abs = len(s.buf) + int(offset)
+	default:
+		return int64(s.pos), errors.New("invalid whence")
+	}
+	if abs < 0 {
+		return int64(s.pos), errors.New("negative position")
+	} else if abs > len(s.buf) {
+		return int64(s.pos), errors.New("seek past end of buffer")
+	}
+	s.pos = abs
+	return int64(s.pos), nil
+}
+
 // Next produces the next token from the scanner
 // When no more tokens are available io.EOF is returned AND the trailing token (if any)
 func (s *Scanner) Next() (token []byte, chardata bool, err error) {

@@ -31,6 +31,43 @@ func TestScanner_Skip(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestScanner_Seek(t *testing.T) {
+	s := NewScanner([]byte(`<nested><element>with data</element><closing/><?skip me></nested>more`))
+	// Read <nested>
+	token, chardata, err := s.Next()
+	assert.NoError(t, err)
+	assert.Equal(t, false, chardata)
+	assert.Equal(t, []byte("<nested>"), token)
+	// Read <element>
+	token, chardata, err = s.Next()
+	assert.NoError(t, err)
+	assert.Equal(t, false, chardata)
+	assert.Equal(t, []byte("<element>"), token)
+	// Go back to <element>
+	_, err = s.Seek(-int64(len(token)), io.SeekCurrent)
+	assert.NoError(t, err)
+	token, chardata, err = s.Next()
+	assert.NoError(t, err)
+	assert.Equal(t, false, chardata)
+	assert.Equal(t, []byte("<element>"), token)
+	// Go back to start
+	_, err = s.Seek(0, io.SeekStart)
+	assert.NoError(t, err)
+	token, chardata, err = s.Next()
+	assert.NoError(t, err)
+	assert.Equal(t, false, chardata)
+	assert.Equal(t, []byte("<nested>"), token)
+	// Go back to end
+	_, err = s.Seek(-4, io.SeekEnd)
+	assert.NoError(t, err)
+	token, chardata, err = s.Next()
+	assert.NoError(t, err)
+	assert.Equal(t, true, chardata)
+	assert.Equal(t, []byte("more"), token)
+	_, _, err = s.Next()
+	assert.EqualError(t, err, "EOF")
+}
+
 func TestScanner(t *testing.T) {
 	type result struct {
 		Token    []byte
