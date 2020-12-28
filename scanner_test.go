@@ -9,13 +9,16 @@ import (
 
 func TestScanner_Skip(t *testing.T) {
 	s := NewScanner([]byte(`<nested><element>with data</element><closing/><?skip me></nested>more`))
+	// Skip nothing
+	err := s.Skip([]byte("<foo />"))
+	assert.NoError(t, err)
 	// Read <nested>
 	token, chardata, err := s.Next()
 	assert.NoError(t, err)
 	assert.Equal(t, false, chardata)
 	assert.Equal(t, []byte("<nested>"), token)
 	// Skip children
-	err = s.Skip()
+	err = s.Skip(nil)
 	assert.NoError(t, err)
 	// Read final "more"
 	token, chardata, err = s.Next()
@@ -27,7 +30,7 @@ func TestScanner_Skip(t *testing.T) {
 	assert.Equal(t, io.EOF, err)
 	// Verify error
 	s.Reset([]byte("<?invalid"))
-	err = s.Skip()
+	err = s.Skip(nil)
 	assert.Error(t, err)
 }
 

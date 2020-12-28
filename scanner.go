@@ -111,7 +111,12 @@ func (s *Scanner) Next() (token []byte, chardata bool, err error) {
 }
 
 // Skip will skip until the end of the most recently processed element
-func (s *Scanner) Skip() error {
+// Token is an _optional_ parameter, if present it will check if the 
+// token was a self-closed element in which case it will exit immediately
+func (s *Scanner) Skip(token []byte) error {
+	if token != nil && IsElement(token) && IsSelfClosing(token) {
+		return nil
+	}
 	for depth := 1; depth > 0; {
 		// Grab the next token, bail on error
 		token, chardata, err := s.Next()
