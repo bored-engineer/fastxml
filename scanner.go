@@ -149,6 +149,15 @@ func (s *Scanner) Skip() error {
 	return nil
 }
 
+// SkipElement extends Skip with a helper for self-closed elements
+// It is faster than SkipToken as it assumes the token is an element
+func (s *Scanner) SkipElement(elemToken []byte) error {
+	if elemToken != nil && IsSelfClosing(elemToken) {
+		return nil
+	}
+	return s.Skip()
+}
+
 // SkipToken extends Skip with a helper for self-closed elements.
 // token is an _optional_ parameter, if present it will check if the
 // element was a self-closed element in which case it will exit immediately
