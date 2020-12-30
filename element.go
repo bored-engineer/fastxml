@@ -104,7 +104,7 @@ func Attr(attrsToken []byte, attrKey []byte) (attrValue []byte, err error) {
 			// TODO: Stop iteration once value is found
 			attrValue = value
 		}
-		return
+		return nil
 	})
 	return
 }
