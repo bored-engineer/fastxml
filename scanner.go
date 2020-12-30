@@ -110,13 +110,21 @@ func (s *Scanner) Next() (token []byte, chardata bool, err error) {
 	return
 }
 
-// Skip will skip until the end of the most recently processed element
-// Token is an _optional_ parameter, if present it will check if the 
-// token was a self-closed element in which case it will exit immediately
-func (s *Scanner) Skip(token []byte) error {
-	if token != nil && IsElement(token) && IsSelfClosing(token) {
-		return nil
+// NextElement calls Next until a Element is reached
+func (s *Scanner) NextElement() (elemToken []byte, err error) {
+	for {
+		token, chardata, err := s.Next()
+		if err != nil {
+			return nil, err
+		} else if chardata || !IsElement(token) {
+			continue
+		}
+		return token, nil
 	}
+}
+
+// Skip will skip until the end of the most recently processed element
+func (s *Scanner) Skip() error {
 	for depth := 1; depth > 0; {
 		// Grab the next token, bail on error
 		token, chardata, err := s.Next()
@@ -139,6 +147,16 @@ func (s *Scanner) Skip(token []byte) error {
 		}
 	}
 	return nil
+}
+
+// SkipToken extends Skip with a helper for self-closed elements.
+// token is an _optional_ parameter, if present it will check if the
+// element was a self-closed element in which case it will exit immediately
+func (s *Scanner) SkipToken(token []byte) error {
+	if token != nil && IsElement(token) && IsSelfClosing(token) {
+		return nil
+	}
+	return s.Skip()
 }
 
 // Reset replaces the buf in scanner to a new slice

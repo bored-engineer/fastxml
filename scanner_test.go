@@ -9,16 +9,13 @@ import (
 
 func TestScanner_Skip(t *testing.T) {
 	s := NewScanner([]byte(`<nested><element>with data</element><closing/><?skip me></nested>more`))
-	// Skip nothing
-	err := s.Skip([]byte("<foo />"))
-	assert.NoError(t, err)
 	// Read <nested>
 	token, chardata, err := s.Next()
 	assert.NoError(t, err)
 	assert.Equal(t, false, chardata)
 	assert.Equal(t, []byte("<nested>"), token)
 	// Skip children
-	err = s.Skip(nil)
+	err = s.Skip()
 	assert.NoError(t, err)
 	// Read final "more"
 	token, chardata, err = s.Next()
@@ -30,7 +27,34 @@ func TestScanner_Skip(t *testing.T) {
 	assert.Equal(t, io.EOF, err)
 	// Verify error
 	s.Reset([]byte("<?invalid"))
-	err = s.Skip(nil)
+	err = s.Skip()
+	assert.Error(t, err)
+}
+
+func TestScanner_SkipToken(t *testing.T) {
+	s := NewScanner([]byte(`<nested><element>with data</element><closing/><?skip me></nested>more`))
+	// Skip nothing
+	err := s.SkipToken([]byte("<foo />"))
+	assert.NoError(t, err)
+	// Read <nested>
+	token, chardata, err := s.Next()
+	assert.NoError(t, err)
+	assert.Equal(t, false, chardata)
+	assert.Equal(t, []byte("<nested>"), token)
+	// Skip children
+	err = s.SkipToken(nil)
+	assert.NoError(t, err)
+	// Read final "more"
+	token, chardata, err = s.Next()
+	assert.NoError(t, err)
+	assert.Equal(t, true, chardata)
+	assert.Equal(t, []byte("more"), token)
+	// EOF
+	_, _, err = s.Next()
+	assert.Equal(t, io.EOF, err)
+	// Verify error
+	s.Reset([]byte("<?invalid"))
+	err = s.SkipToken(nil)
 	assert.Error(t, err)
 }
 

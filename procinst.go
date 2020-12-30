@@ -4,7 +4,7 @@ import "bytes"
 
 // IsProcInst determines if a []byte is proc inst (ex: <?target inst>)
 func IsProcInst(b []byte) bool {
-	return len(b) >=2 && b[1] == '?'
+	return len(b) >= 2 && b[1] == '?'
 }
 
 // ProcInst extracts the target and inst from a ProcInst (ex: `<?target inst>` -> (`target`, `inst`))
