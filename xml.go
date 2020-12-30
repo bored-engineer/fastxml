@@ -8,7 +8,7 @@ import (
 
 // XMLCharData produces a xml.CharData given a token
 func XMLCharData(token []byte) (xml.CharData, error) {
-	cd, err := CharData(token)
+	cd, err := CharData(token, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func XMLName(token []byte) xml.Name {
 
 // XMLAttr produces a xml.Attr given a key, value
 func XMLAttr(key []byte, value []byte) (attr xml.Attr, err error) {
-	value, err = DecodeEntities(value)
+	value, err = DecodeEntities(value, nil)
 	if err != nil {
 		return
 	}

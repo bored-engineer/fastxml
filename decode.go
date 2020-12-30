@@ -10,15 +10,20 @@ import (
 )
 
 // DecodeEntities will resolve any (known) XML entities in the input
-func DecodeEntities(in []byte) ([]byte, error) {
+// scratch is an optional existing byte slice to append the decoded
+// values to. If scratch is nil a new slice will be allocated
+func DecodeEntities(in []byte, scratch []byte) ([]byte, error) {
 	start := bytes.IndexRune(in, '&')
 	if start == -1 {
 		// No entities, return as-is
 		return in, nil
 	}
-	// The final result will always be smaller than the input length
-	buf := make([]byte, len(in))
-	size := copy(buf, in[:start])
+	// If no scratch slice given allocate a new one with the "right" capacity
+	if scratch == nil {
+		// The final result will always be smaller than the input length
+		scratch = make([]byte, 0, len(in))
+	}
+	scratch = append(scratch, in[:start]...)
 	start++
 	for {
 		// Find the end of the entity
@@ -40,35 +45,36 @@ func DecodeEntities(in []byte) ([]byte, error) {
 			if err != nil {
 				return in, fmt.Errorf("failed to decode %q: %w", str, err)
 			}
-			// TODO: This is probably a good bit slow
-			size += utf8.EncodeRune(buf[size:], rune(num))
+			// Make room for utf8.UTFMax if needed before hitting capacity
+			size := len(scratch)
+			if cap(scratch) >= size+utf8.UTFMax {
+				scratch = append(scratch, make([]byte, utf8.UTFMax)...)
+			}
+			// Encode in place
+			size += utf8.EncodeRune(scratch[size:size+utf8.UTFMax], rune(num))
+			scratch = scratch[:size]
 		} else {
 			// Lookup an entity by name
 			entity := String(in[start : start+end])
 			// common entities are in the switch before hashmap
 			switch entity {
 			case "lt":
-				buf[size] = '<'
-				size++
+				scratch = append(scratch, '<')
 			case "gt":
-				buf[size] = '>'
-				size++
+				scratch = append(scratch, '>')
 			case "amp":
-				buf[size] = '&'
-				size++
+				scratch = append(scratch, '&')
 			case "apos":
-				buf[size] = '\''
-				size++
+				scratch = append(scratch, '\'')
 			case "quot":
-				buf[size] = '"'
-				size++
+				scratch = append(scratch, '"')
 			default:
 				// Check from more expensive map
 				decoded, ok := xml.HTMLEntity[entity]
 				if !ok {
 					return in, fmt.Errorf("unknown XML entity %q", entity)
 				}
-				size += copy(buf[size:], decoded)
+				scratch = append(scratch, decoded...)
 			}
 		}
 		// Find next entity
@@ -76,8 +82,8 @@ func DecodeEntities(in []byte) ([]byte, error) {
 			start += end + idx + 1
 		} else {
 			// No more entities, copy rest of bytes and return
-			size += copy(buf[size:], in[start+end+1:])
-			return buf[:size], nil
+			scratch = append(scratch, in[start+end+1:]...)
+			return scratch, nil
 		}
 	}
 }

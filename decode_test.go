@@ -51,7 +51,7 @@ func TestDecodeEntities(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Input, func(t *testing.T) {
-			actual, err := DecodeEntities([]byte(tc.Input))
+			actual, err := DecodeEntities([]byte(tc.Input), nil)
 			if tc.Error != "" {
 				assert.EqualError(t, err, tc.Error)
 			} else {
