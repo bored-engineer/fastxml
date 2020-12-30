@@ -9,20 +9,8 @@ import (
 	"unicode/utf8"
 )
 
-// DecodeEntities will resolve any (known) XML entities in the input
-// scratch is an optional existing byte slice to append the decoded
-// values to. If scratch is nil a new slice will be allocated
-func DecodeEntities(in []byte, scratch []byte) ([]byte, error) {
-	start := bytes.IndexRune(in, '&')
-	if start == -1 {
-		// No entities, return as-is
-		return in, nil
-	}
-	// If no scratch slice given allocate a new one with the "right" capacity
-	if scratch == nil {
-		// The final result will always be smaller than the input length
-		scratch = make([]byte, 0, len(in))
-	}
+// decodeEntities appends to scratch
+func decodeEntities(scratch []byte, in []byte, start int) ([]byte, error) {
 	scratch = append(scratch, in[:start]...)
 	start++
 	for {
@@ -86,4 +74,32 @@ func DecodeEntities(in []byte, scratch []byte) ([]byte, error) {
 			return scratch, nil
 		}
 	}
+}
+
+// DecodeEntities will resolve any (known) XML entities in the input
+// scratch is an optional existing byte slice to append the decoded
+// values to. If scratch is nil a new slice will be allocated
+func DecodeEntities(in []byte, scratch []byte) ([]byte, error) {
+	start := bytes.IndexRune(in, '&')
+	if start == -1 {
+		// No entities, return as-is
+		return in, nil
+	}
+	// If no scratch slice given allocate a new one with the "right" capacity
+	if scratch == nil {
+		// The final result will always be smaller than the input length
+		scratch = make([]byte, 0, len(in))
+	}
+	return decodeEntities(scratch, in, start)
+}
+
+// DecodeEntitiesAppend will efficiently append the decoded in to out
+// Behaves the same as DecodeEntities
+func DecodeEntitiesAppend(out []byte, in []byte) ([]byte, error) {
+	start := bytes.IndexRune(in, '&')
+	if start == -1 {
+		// No entities, memmove as-is (fast)
+		return append(out, in...), nil
+	}
+	return decodeEntities(out, in, start)
 }
