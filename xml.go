@@ -7,8 +7,8 @@ import (
 )
 
 // XMLCharData produces a xml.CharData given a token
-func XMLCharData(token []byte) (xml.CharData, error) {
-	cd, err := CharData(token, nil)
+func XMLCharData(token []byte, scratch []byte) (xml.CharData, error) {
+	cd, err := CharData(token, scratch)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func XMLElement(token []byte) (xml.Token, error) {
 func XMLToken(token []byte, chardata bool) (xml.Token, error) {
 	switch {
 	case chardata:
-		return XMLCharData(token)
+		return XMLCharData(token, nil)
 	case IsDirective(token):
 		return XMLDirective(token), nil
 	case IsComment(token):
