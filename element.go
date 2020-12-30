@@ -61,29 +61,29 @@ func Element(token []byte) (name []byte, attrs []byte) {
 
 // Attrs calls f for each key="value" in token, stopping if f returns true
 // The value will _not_ be decoded yet
-func Attrs(token []byte, f func(key []byte, value []byte) error) error {
+func Attrs(attrsToken []byte, f func(key []byte, value []byte) error) error {
 	offset := 0
-	for offset < len(token) {
+	for offset < len(attrsToken) {
 		// Find the next `=` section
-		equal := bytes.IndexByte(token[offset:], '=')
+		equal := bytes.IndexByte(attrsToken[offset:], '=')
 		if equal == -1 {
 			break // End of element
 		}
 		// Extract the key
-		key := bytes.TrimSpace(token[offset : offset+equal])
+		key := bytes.TrimSpace(attrsToken[offset : offset+equal])
 		offset += equal + 1
 		// Find the `"` to start the value
-		start := bytes.IndexByte(token[offset:], '"')
+		start := bytes.IndexByte(attrsToken[offset:], '"')
 		if start == -1 {
 			return errAttrPrefix
 		}
 		offset += start + 1
 		// Find the `"` to end the value
-		end := bytes.IndexByte(token[offset:], '"')
+		end := bytes.IndexByte(attrsToken[offset:], '"')
 		if end == -1 {
 			return errAttrSuffix
 		}
-		value := token[offset : offset+end]
+		value := attrsToken[offset : offset+end]
 		offset += end + 1
 		// Trigger the callback
 		if err := f(key, value); err != nil {
@@ -91,8 +91,20 @@ func Attrs(token []byte, f func(key []byte, value []byte) error) error {
 		}
 	}
 	// Make sure no extra values in
-	if len(bytes.TrimSpace(token[offset:])) > 0 {
+	if len(bytes.TrimSpace(attrsToken[offset:])) > 0 {
 		return errWhitespace
 	}
 	return nil
+}
+
+// Attr reads a specific attribute value
+func Attr(attrsToken []byte, attrKey []byte) (attrValue []byte, err error) {
+	err = Attrs(attrsToken, func(key []byte, value []byte) error {
+		if bytes.Equal(attrKey, key) {
+			// TODO: Stop iteration once value is found
+			attrValue = value
+		}
+		return
+	})
+	return
 }
