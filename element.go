@@ -97,12 +97,12 @@ func Attrs(attrsToken []byte, f func(key []byte, value []byte) error) error {
 	return nil
 }
 
-// Attr reads a specific attribute value
+// Attr reads a specific attribute and decodes the value
 func Attr(attrsToken []byte, attrKey []byte) (attrValue []byte, err error) {
-	err = Attrs(attrsToken, func(key []byte, value []byte) error {
+	err = Attrs(attrsToken, func(key []byte, value []byte) (err error) {
 		if bytes.Equal(attrKey, key) {
 			// TODO: Stop iteration once value is found
-			attrValue = value
+			attrValue, err = DecodeEntities(value, nil)
 		}
 		return nil
 	})
