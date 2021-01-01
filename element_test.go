@@ -1,7 +1,6 @@
 package fastxml
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -100,7 +99,8 @@ func TestAttrs(t *testing.T) {
 		{
 			Token: `key="value" anotherkey="val"`,
 			Limit: 1,
-			Error: "terminated",
+			Key:   []string{"key"},
+			Value: []string{"value"},
 		},
 		{
 			Token: `key`,
@@ -119,17 +119,18 @@ func TestAttrs(t *testing.T) {
 		t.Run(tc.Token, func(t *testing.T) {
 			var keys []string
 			var vals []string
-			err := Attrs([]byte(tc.Token), func(key, val []byte) error {
+			err := Attrs([]byte(tc.Token), func(key, val []byte) bool {
 				keys = append(keys, string(key))
 				vals = append(vals, string(val))
 				if len(keys) == tc.Limit {
-					return errors.New("terminated")
+					return false
 				}
-				return nil
+				return true
 			})
 			if tc.Error != "" {
 				assert.EqualError(t, err, tc.Error)
 			} else {
+				assert.NoError(t, err)
 				assert.Equal(t, tc.Key, keys)
 				assert.Equal(t, tc.Value, vals)
 			}

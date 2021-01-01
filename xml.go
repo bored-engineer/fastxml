@@ -66,15 +66,19 @@ var attrsPool = &sync.Pool{
 func XMLAttrs(token []byte) ([]xml.Attr, error) {
 	attrs := attrsPool.Get().([]xml.Attr)
 	// Loop each attribute
-	if err := Attrs(token, func(key []byte, value []byte) error {
-		attr, err := XMLAttr(key, value)
-		if err != nil {
-			return err
+	var attrErr error
+	if err := Attrs(token, func(key []byte, value []byte) bool {
+		var attr xml.Attr
+		attr, attrErr = XMLAttr(key, value)
+		if attrErr != nil {
+			return false
 		}
 		attrs = append(attrs, attr)
-		return nil
+		return true
 	}); err != nil {
 		return nil, err
+	} else if attrErr != nil {
+		return nil, attrErr
 	}
 	// If no attributes
 	if len(attrs) == 0 {
