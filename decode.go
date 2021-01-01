@@ -17,7 +17,7 @@ func decodeEntities(scratch []byte, in []byte, start int) ([]byte, error) {
 		// Find the end of the entity
 		end := bytes.IndexRune(in[start:], ';')
 		if end == -1 {
-			return in, errors.New("expected ';' to end XML entity, not found")
+			return scratch, errors.New("expected ';' to end XML entity, not found")
 		}
 		// rune based on hex/decimal value
 		if in[start] == '#' {
@@ -31,7 +31,7 @@ func decodeEntities(scratch []byte, in []byte, start int) ([]byte, error) {
 			// rune is a int32
 			num, err := strconv.ParseInt(str, base, 32)
 			if err != nil {
-				return in, fmt.Errorf("failed to decode %q: %w", str, err)
+				return scratch, fmt.Errorf("failed to decode %q: %w", str, err)
 			}
 			// Make room for utf8.UTFMax if needed before hitting capacity
 			size := len(scratch)
@@ -60,7 +60,7 @@ func decodeEntities(scratch []byte, in []byte, start int) ([]byte, error) {
 				// Check from more expensive map
 				decoded, ok := xml.HTMLEntity[entity]
 				if !ok {
-					return in, fmt.Errorf("unknown XML entity %q", entity)
+					return scratch, fmt.Errorf("unknown XML entity %q", entity)
 				}
 				scratch = append(scratch, decoded...)
 			}

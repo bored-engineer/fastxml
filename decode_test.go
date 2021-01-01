@@ -58,6 +58,15 @@ func TestDecodeEntities(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.Expected, string(actual))
 			}
+			prepend := []byte("prepend")
+			actual, err = DecodeEntitiesAppend(prepend, []byte(tc.Input))
+			assert.Equal(t, []byte("prepend"), actual[:len(prepend)])
+			if tc.Error != "" {
+				assert.EqualError(t, err, tc.Error)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.Expected, string(actual[len(prepend):]))
+			}
 		})
 	}
 }
