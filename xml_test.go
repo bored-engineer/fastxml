@@ -132,7 +132,6 @@ func TestXMLTokenReader(t *testing.T) {
 				}
 			}
 			if tc.Error != "" {
-				t.Log(tc.Input, tokens, err)
 				assert.EqualError(t, err, tc.Error)
 			} else {
 				assert.NoError(t, err)
