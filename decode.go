@@ -35,10 +35,8 @@ func decodeEntities(scratch []byte, in []byte, start int) ([]byte, error) {
 			}
 			// Make room for utf8.UTFMax if needed before hitting capacity
 			size := len(scratch)
-			if cap(scratch) >= size+utf8.UTFMax {
-				scratch = append(scratch, make([]byte, utf8.UTFMax)...)
-			}
 			// Encode in place
+			scratch = append(scratch, make([]byte, utf8.UTFMax)...)
 			size += utf8.EncodeRune(scratch[size:size+utf8.UTFMax], rune(num))
 			scratch = scratch[:size]
 		} else {

@@ -15,36 +15,31 @@ func TestDecodeEntities(t *testing.T) {
 		{
 			Input:    `Hello World`,
 			Expected: `Hello World`,
-		},
-		{
+		}, {
 			Input:    `Fast&amp;&quot;&apos;&gt;&lt;Path`,
 			Expected: `Fast&"'><Path`,
-		},
-		{
+		}, {
 			Input:    `It costs &pound;1`,
 			Expected: `It costs £1`,
-		},
-		{
+		}, {
 			Input:    `&#x00A9; 2020`,
 			Expected: `© 2020`,
-		},
-		{
+		}, {
+			Input:    `Foo&#174;`,
+			Expected: `Foo®`,
+		}, {
 			Input:    `1 &#60; 2`,
 			Expected: `1 < 2`,
-		},
-		{
+		}, {
 			Input: `&#1234567891011;`,
 			Error: `failed to decode "1234567891011": strconv.ParseInt: parsing "1234567891011": value out of range`,
-		},
-		{
+		}, {
 			Input: `&#xnothex;`,
 			Error: `failed to decode "nothex": strconv.ParseInt: parsing "nothex": invalid syntax`,
-		},
-		{
+		}, {
 			Input: `&`,
 			Error: `expected ';' to end XML entity, not found`,
-		},
-		{
+		}, {
 			Input: `&invalid;`,
 			Error: `unknown XML entity "invalid"`,
 		},
