@@ -104,7 +104,7 @@ func TestAttrs(t *testing.T) {
 		},
 		{
 			Token: `key`,
-			Error: "expected whitespace but got non-whitespace",
+			Error: `expected whitespace but got "key"`,
 		},
 		{
 			Token: `key=`,

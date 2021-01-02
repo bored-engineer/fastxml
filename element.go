@@ -3,6 +3,7 @@ package fastxml
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"unicode"
 )
 
@@ -11,7 +12,6 @@ var (
 	errAttrKeyWhitespace = errors.New(`expected Attr to have a non-whitespace key`)
 	errAttrPrefix        = errors.New(`expected Attr to start with '"'`)
 	errAttrSuffix        = errors.New(`expected Attr to end with '"'`)
-	errWhitespace        = errors.New(`expected whitespace but got non-whitespace`)
 )
 
 // IsElement checks if a []byte is an element (is not a ProcInst or Directive)
@@ -122,7 +122,7 @@ func RawAttrs(attrsToken []byte, f func(keyStart, keyEnd, valueStart, valueEnd i
 	}
 	// Make sure no extra values in
 	if idx := bytes.IndexFunc(attrsToken[offset:], notSpace); idx != -1 {
-		return errWhitespace
+		return fmt.Errorf("expected whitespace but got %q", String(attrsToken[offset+idx:]))
 	}
 	return nil
 }
