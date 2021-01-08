@@ -1,4 +1,4 @@
-# fastxml
+# fastxml [![Go Reference](https://pkg.go.dev/badge/github.com/bored-engineer/fastxml.svg)](https://pkg.go.dev/github.com/bored-engineer/fastxml)
 A "fast" implementation of Golang's [xml.TokenReader](https://godoc.org/encoding/xml#TokenReader) for well-formed XML input. 
 
 ## Security
